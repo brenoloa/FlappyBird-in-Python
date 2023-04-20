@@ -6,10 +6,9 @@ JANELA_ALTURA = 800
 SPEED = 10
 GRAVITY = 1
 GAME_SPEED = 10
-
+SCORE = 0
 GROUND_WIDTH = 2 * JANELA_LARGURA
 GROUND_HEIGHT = 100
-
 PIPE_WIDTH = 120
 PIPE_HEIGHT = 500
 PIPE_GAP = 200
@@ -44,6 +43,7 @@ class Bird(pygame.sprite.Sprite):
 
     def bump(self): #pulo
         self.speed = - SPEED
+
 
 class Pipe(pygame.sprite.Sprite):
 
@@ -92,6 +92,12 @@ def get_random_pipes(xpos):
     pipe_inverted = Pipe(True, xpos, JANELA_ALTURA - size - PIPE_GAP)
     return (pipe, pipe_inverted)
 
+def exibe_mensagem(msg, tamanho, cor):
+    fonte = pygame.font.SysFont('comicsansms', tamanho, True, False)
+    mensagem = f'{msg}'
+    texto_formatado = fonte.render(mensagem, True, cor)
+    text_rect = texto_formatado.get_rect(topleft=(136, 420))
+    screen.blit(texto_formatado, text_rect)
 pygame.init()
 
 screen = pygame.display.set_mode((JANELA_LARGURA, JANELA_ALTURA))
@@ -101,10 +107,16 @@ pygame.display.set_caption("brenoloa")
 BACKGROUND = pygame.image.load('background.png')
 BACKGROUND = pygame.transform.scale(BACKGROUND, (JANELA_LARGURA, JANELA_ALTURA))
 
+GAME_OVER = pygame.image.load('gameover.png').convert_alpha()
+passed_pipes = pygame.sprite.Group()
 bird_group = pygame.sprite.Group()
 bird = Bird()
 bird_group.add(bird)
-
+#-=-=
+font = pygame.font.Font('04B_19__.TTF', 46)
+text = font.render("Score: " + str(SCORE), 1, (255, 255, 255))
+screen.blit(text, (10, 10))
+#-=-=
 ground_group = pygame.sprite.Group()
 for i in range(2):
     ground = Ground(GROUND_WIDTH * i)
@@ -115,48 +127,76 @@ for i in range(2):
     pipes = get_random_pipes(JANELA_LARGURA * i + 600)
     pipe_group.add(pipes[0])
     pipe_group.add(pipes[1])
-
+game_over = False
 clock = pygame.time.Clock()
 # looping principal.
 while True:
     clock.tick(30) #fps
+
     for event in pygame.event.get():
         if event.type == QUIT:
             pygame.quit()
 
         if event.type == KEYDOWN:
             if event.key == K_SPACE:
-                bird.bump()
+                if not game_over:  # somente pular se o jogo não tiver terminado
+                    bird.bump()
+                else:  # reiniciar o jogo se o jogo tiver terminado
+                    SCORE = 0
+                    bird_group.empty()
+                    bird = Bird()
+                    bird_group.add(bird)
 
-    screen.blit(BACKGROUND, (0, 0))
+                    pipe_group.empty()
+                    for i in range(2):
+                        pipes = get_random_pipes(JANELA_LARGURA * i + 600)
+                        pipe_group.add(pipes[0])
+                        pipe_group.add(pipes[1])
 
-    if is_off_screen(ground_group.sprites()[0]):
-        ground_group.remove(ground_group.sprites()[0])
+                    game_over = False
 
-        new_ground = Ground(GROUND_WIDTH - 20)
-        ground_group.add(new_ground)
+    if not game_over:
+        screen.blit(BACKGROUND, (0, 0))
+        if is_off_screen(ground_group.sprites()[0]):
+            ground_group.remove(ground_group.sprites()[0])
 
-    if is_off_screen(pipe_group.sprites()[0]):
-        pipe_group.remove(pipe_group.sprites()[0])
-        pipe_group.remove(pipe_group.sprites()[0])
-    
-        pipes = get_random_pipes(JANELA_LARGURA * 2)
+            new_ground = Ground(GROUND_WIDTH - 20)
+            ground_group.add(new_ground)
 
-        pipe_group.add(pipes[0])
-        pipe_group.add(pipes[1])
+        if is_off_screen(pipe_group.sprites()[0]):
+            pipe_group.remove(pipe_group.sprites()[0])
+            pipe_group.remove(pipe_group.sprites()[0])
 
-    bird_group.update()
-    ground_group.update()
-    pipe_group.update()
+            pipes = get_random_pipes(JANELA_LARGURA * 2)
 
-    bird_group.draw(screen)
-    ground_group.draw(screen)
-    pipe_group.draw(screen)
+            pipe_group.add(pipes[0])
+            pipe_group.add(pipes[1])
+        bird_group.update()
+        pipe_group.update()
+        ground_group.update()
+        passed_pipes.update()
+
+        bird_group.draw(screen)
+        pipe_group.draw(screen)
+        ground_group.draw(screen)
+        text = font.render("" + str(SCORE), 1, (255, 255, 255))
+        screen.blit(text, (190, 300))
+
+
+        # Verifica colisões
+        if pygame.sprite.groupcollide(bird_group, ground_group, False, False, pygame.sprite.collide_mask) or \
+           pygame.sprite.groupcollide(bird_group, pipe_group, False, False, pygame.sprite.collide_mask):
+            game_over = True
+
+        # Mostra a mensagem de Game Over
+        if game_over:
+            screen.blit(GAME_OVER, (JANELA_LARGURA/2 - GAME_OVER.get_width()/2, JANELA_ALTURA/2 - GAME_OVER.get_height()/2))
+
+            exibe_mensagem("Press SPACE", 20, (255, 255, 255))
+
+    for pipe in pipe_group:
+        if pipe.rect.right < bird.rect.left and pipe not in passed_pipes:
+            SCORE += 1
+            passed_pipes.add(pipe)
 
     pygame.display.update()
-    if (pygame.sprite.groupcollide(bird_group, ground_group, False, False, pygame.sprite.collide_mask) or
-        pygame.sprite.groupcollide(bird_group, pipe_group, False, False, pygame.sprite.collide_mask)):
-
-        # GAME OVER
-        break
-
