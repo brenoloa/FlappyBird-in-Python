@@ -1,2 +1,3 @@
 # FlappyBird-in-Python
-The game is incomplete because it has no start screen and no gameover message, but the main structure is working with the scenario and collisions.
+It's a simple game, it doesn't have an entrance screen, but it has collisions and a game over screen, made by a beginner
+
