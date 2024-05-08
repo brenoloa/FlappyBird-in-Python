@@ -1,6 +1,9 @@
 import pygame
 from pygame.locals import *
 import random
+import os
+#os.chdir('C:/Users/Pichau/PycharmProjects/pythonProject3/games/FlappyBird/')
+
 JANELA_LARGURA = 400
 JANELA_ALTURA = 800
 SPEED = 10
@@ -96,8 +99,16 @@ def exibe_mensagem(msg, tamanho, cor):
     fonte = pygame.font.SysFont('comicsansms', tamanho, True, False)
     mensagem = f'{msg}'
     texto_formatado = fonte.render(mensagem, True, cor)
-    text_rect = texto_formatado.get_rect(topleft=(136, 420))
+    text_rect = texto_formatado.get_rect(topleft=(110, 420))
     screen.blit(texto_formatado, text_rect)
+
+def exibe_mensagem_novo(msg, tamanho, cor):
+    fonte = pygame.font.SysFont('comicsansms', tamanho, True, False)
+    mensagem = f'{msg}'
+    texto_formatado = fonte.render(mensagem, True, cor)
+    text_rect = texto_formatado.get_rect(topleft=(50 , 20))
+    screen.blit(texto_formatado, text_rect)
+
 pygame.init()
 
 screen = pygame.display.set_mode((JANELA_LARGURA, JANELA_ALTURA))
@@ -115,14 +126,16 @@ bird_group.add(bird)
 #-=-=
 font = pygame.font.Font('04B_19__.TTF', 46)
 text = font.render("Score: " + str(SCORE), 1, (255, 255, 255))
+
 screen.blit(text, (10, 10))
+
 #-=-=
 ground_group = pygame.sprite.Group()
 for i in range(2):
     ground = Ground(GROUND_WIDTH * i)
     ground_group.add(ground)
 
-pipe_group = pygame.sprite.Group()
+    pipe_group = pygame.sprite.Group()
 for i in range(2):
     pipes = get_random_pipes(JANELA_LARGURA * i + 600)
     pipe_group.add(pipes[0])
@@ -132,7 +145,7 @@ clock = pygame.time.Clock()
 # looping principal.
 while True:
     clock.tick(30) #fps
-
+    exibe_mensagem_novo("github.com/brenoloa", 30, (255, 255, 255))
     for event in pygame.event.get():
         if event.type == QUIT:
             pygame.quit()
@@ -192,11 +205,13 @@ while True:
         if game_over:
             screen.blit(GAME_OVER, (JANELA_LARGURA/2 - GAME_OVER.get_width()/2, JANELA_ALTURA/2 - GAME_OVER.get_height()/2))
 
-            exibe_mensagem("Press SPACE", 20, (255, 255, 255))
+            exibe_mensagem("Pressione ESPAÇO", 20, (255, 255, 255))
+            exibe_mensagem("Pressione ESPAÇO", 20, (255, 255, 255))
 
     for pipe in pipe_group:
         if pipe.rect.right < bird.rect.left and pipe not in passed_pipes:
-            SCORE += 1
+            SCORE = (SCORE + 0.5)
             passed_pipes.add(pipe)
-
+            GAME_SPEED = (GAME_SPEED * 1.01)
     pygame.display.update()
+
